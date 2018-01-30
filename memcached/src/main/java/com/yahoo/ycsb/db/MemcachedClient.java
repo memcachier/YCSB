@@ -43,6 +43,8 @@ import net.spy.memcached.FailureMode;
 // class of the same name in this file.
 import net.spy.memcached.internal.GetFuture;
 import net.spy.memcached.internal.OperationFuture;
+import net.spy.memcached.auth.AuthDescriptor;
+import net.spy.memcached.auth.PlainCallbackHandler;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -68,6 +70,9 @@ public class MemcachedClient extends DB {
   private int objectExpirationTime;
 
   public static final String HOSTS_PROPERTY = "memcached.hosts";
+
+  public static final String USERNAME_PROPERTY = "memcached.username";
+  public static final String PASSWORD_PROPERTY = "memcached.password";
 
   public static final int DEFAULT_PORT = 11211;
 
@@ -155,6 +160,14 @@ public class MemcachedClient extends DB {
     connectionFactoryBuilder.setFailureMode(
         failureString == null ? FAILURE_MODE_PROPERTY_DEFAULT
                               : FailureMode.valueOf(failureString));
+
+    String usernameString = getProperties().getProperty(USERNAME_PROPERTY);
+    String passwordString = getProperties().getProperty(PASSWORD_PROPERTY);
+    if (usernameString != null && passwordString != null) {
+      AuthDescriptor ad = new AuthDescriptor(new String[] {"PLAIN"},
+          new PlainCallbackHandler(usernameString, passwordString));
+      connectionFactoryBuilder.setAuthDescriptor(ad);
+    }
 
     // Note: this only works with IPv4 addresses due to its assumption of
     // ":" being the separator of hostname/IP and port; this is not the case
